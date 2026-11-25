@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="uk" data-bs-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CoffeeBox – прибуток">
+  <meta name="author" content="Гоженко Є.Є.">
+  <title>Прибуток</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <style>
+    .navbar-brand {
+      padding-top: .75rem;
+      padding-bottom: .75rem;
+      background-color: rgba(0, 0, 0, .25);
+      box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
+    }
+    .sidebar .nav-link {
+      font-size: .875rem;
+      font-weight: 500;
+      color: var(--bs-body-color);
+    }
+    .sidebar .nav-link.active { color: var(--bs-primary); }
+    .sidebar .nav-link:hover { color: var(--bs-primary); }
+    @media (min-width: 768px) {
+      .sidebar-sticky {
+        position: sticky;
+        top: 48px;
+        height: calc(100vh - 48px);
+        overflow-y: auto;
+      }
+    }
+    .chart-pie { height: 250px; }
+    .chart-bar { height: 520px; }
+  </style>
+
+  <!-- Тема: застосовується одразу, щоб сторінка не блимала -->
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem('theme'); } catch (e) {}
+      var theme = saved || 'auto';
+      var real = theme === 'auto'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : theme;
+      document.documentElement.setAttribute('data-bs-theme', real);
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- Верхня смужка -->
+  <header class="navbar sticky-top bg-dark flex-md-nowrap p-0 shadow" data-bs-theme="dark">
+    <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 text-white" href="admin.html">CoffeeBox</a>
+    <ul class="navbar-nav flex-row d-md-none">
+      <li class="nav-item text-nowrap">
+        <button class="nav-link px-3 text-white" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false"
+                aria-label="Меню">
+          <i class="bi bi-list fs-4"></i>
+        </button>
+      </li>
+    </ul>
+  </header>
+
+  <div class="container-fluid">
+    <div class="row">
+
+      <!-- Бічна панель -->
+      <div class="sidebar col-md-3 col-lg-2 p-0 bg-body-tertiary border-end">
+        <div class="offcanvas-md offcanvas-end bg-body-tertiary" tabindex="-1" id="sidebarMenu"
+             aria-labelledby="sidebarMenuLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sidebarMenuLabel">CoffeeBox</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+                    data-bs-target="#sidebarMenu" aria-label="Закрити"></button>
+          </div>
+          <div class="offcanvas-body d-md-flex flex-column p-0 pt-lg-3 sidebar-sticky">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" href="admin.html">
+                  <i class="bi bi-cart"></i> Товари
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2 active" aria-current="page" href="profit.html">
+                  <i class="bi bi-graph-up"></i> Прибуток
+                </a>
+              </li>
+            </ul>
+
+            <hr class="my-3">
+
+            <ul class="nav flex-column mb-auto">
+              <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" href="#">
+                  <i class="bi bi-gear"></i> Налаштування
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" href="#">
+                  <i class="bi bi-door-closed"></i> Вихід
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Основна панель -->
+      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <h1 class="h2">Прибуток</h1>
+          <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+              <button type="button" class="btn btn-sm btn-outline-secondary">Поділитися</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary">Експорт</button>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1">
+              <i class="bi bi-calendar3"></i> Цей тиждень
+            </button>
+          </div>
+        </div>
+
+        <!-- Картки-підсумки -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-lg-3">
+            <div class="card shadow-sm bg-body-tertiary h-100"><div class="card-body">
+              <div class="text-body-secondary small">Продано за тиждень, штук</div>
+              <div class="fs-3 fw-semibold" id="kpi-units">—</div>
+            </div></div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card shadow-sm bg-body-tertiary h-100"><div class="card-body">
+              <div class="text-body-secondary small">Виручка, грн</div>
+              <div class="fs-3 fw-semibold" id="kpi-revenue">—</div>
+            </div></div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card shadow-sm bg-body-tertiary h-100"><div class="card-body">
+              <div class="text-body-secondary small">Прибуток, грн</div>
+              <div class="fs-3 fw-semibold text-success" id="kpi-profit">—</div>
+            </div></div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card shadow-sm bg-body-tertiary h-100"><div class="card-body">
+              <div class="text-body-secondary small">Найприбутковіший товар</div>
+              <div class="fs-5 fw-semibold" id="kpi-best">—</div>
+            </div></div>
+          </div>
+        </div>
+
+        <!-- Лінійний графік -->
+        <section class="card shadow-sm bg-body-tertiary mb-4"><div class="card-body">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h2 class="h5 card-title mb-0">Виручка та прибуток за днями, грн</h2>
+            <div class="btn-group btn-group-sm" id="line-filter" role="group" aria-label="Категорія товарів">
+              <button type="button" class="btn btn-outline-primary active" data-group="all">Усі товари</button>
+              <button type="button" class="btn btn-outline-primary" data-group="0">Кава в зернах</button>
+              <button type="button" class="btn btn-outline-primary" data-group="1">Чай</button>
+              <button type="button" class="btn btn-outline-primary" data-group="2">Кавове обладнання</button>
+            </div>
+          </div>
+          <div id="line-chart" class="chart-line"></div>
+        </div></section>
+
+        <!-- Діаграми Google Charts -->
+        <section class="card shadow-sm bg-body-tertiary mb-4"><div class="card-body">
+          <h2 class="h5 card-title mb-3">Продажі товарів за кожен день, штук</h2>
+          <div id="products-legend" class="d-flex flex-wrap gap-3 small mb-3"></div>
+          <div class="row g-2">
+            <div class="col-12 col-xl"><div id="pie1" class="chart-pie"></div></div>
+            <div class="col-12 col-xl"><div id="pie2" class="chart-pie"></div></div>
+            <div class="col-12 col-xl"><div id="pie3" class="chart-pie"></div></div>
+            <div class="col-12 col-xl"><div id="pie4" class="chart-pie"></div></div>
+            <div class="col-12 col-xl"><div id="pie5" class="chart-pie"></div></div>
+            <div class="col-12 col-xl"><div id="pie6" class="chart-pie"></div></div>
+            <div class="col-12 col-xl"><div id="pie7" class="chart-pie"></div></div>
+          </div>
+        </div></section>
+
+        <section class="card shadow-sm bg-body-tertiary mb-4"><div class="card-body">
+          <div class="row g-3">
+            <div class="col-12 col-xl-6"><div id="bar-abs" class="chart-bar"></div></div>
+            <div class="col-12 col-xl-6"><div id="bar-pct" class="chart-bar"></div></div>
+          </div>
+        </div></section>
+
+        <!-- Таблиця продажів -->
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr><th scope="col" class="bg-primary-subtle">Дата</th><th scope="col" class="bg-primary-subtle">Товар</th><th scope="col" class="bg-primary-subtle">Продано, штук</th><th scope="col" class="bg-primary-subtle">Ціна одиниці, грн</th><th scope="col" class="bg-primary-subtle">Прибуток одиниці, грн</th><th scope="col" class="bg-primary-subtle">Виручка, грн</th><th scope="col" class="bg-primary-subtle">Прибуток, грн</th></tr>
+            </thead>
+            <tbody class="table-group-divider">
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Ефіопія Сідамо</td><td>11</td><td>420</td><td>147</td><td>4620</td><td>1617</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Бразилія Сантос</td><td>16</td><td>320</td><td>112</td><td>5120</td><td>1792</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Колумбія Супремо</td><td>10</td><td>380</td><td>133</td><td>3800</td><td>1330</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Еспресо-мікс</td><td>22</td><td>290</td><td>102</td><td>6380</td><td>2244</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Улун Те Гуань Інь</td><td>8</td><td>350</td><td>122</td><td>2800</td><td>976</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Зелений Сенча</td><td>14</td><td>260</td><td>91</td><td>3640</td><td>1274</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Чорний Ассам</td><td>16</td><td>210</td><td>74</td><td>3360</td><td>1184</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Карпатський збір</td><td>11</td><td>180</td><td>63</td><td>1980</td><td>693</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Ручна кавомолка</td><td>5</td><td>1250</td><td>438</td><td>6250</td><td>2190</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Турка мідна</td><td>3</td><td>690</td><td>241</td><td>2070</td><td>723</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Френч-прес</td><td>6</td><td>780</td><td>273</td><td>4680</td><td>1638</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">02.11.2026</th><td>Кавова чашка</td><td>9</td><td>240</td><td>84</td><td>2160</td><td>756</td></tr>
+            </tbody>
+            <tbody class="table-group-divider">
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Ефіопія Сідамо</td><td>17</td><td>420</td><td>147</td><td>7140</td><td>2499</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Бразилія Сантос</td><td>21</td><td>320</td><td>112</td><td>6720</td><td>2352</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Колумбія Супремо</td><td>14</td><td>380</td><td>133</td><td>5320</td><td>1862</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Еспресо-мікс</td><td>24</td><td>290</td><td>102</td><td>6960</td><td>2448</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Улун Те Гуань Інь</td><td>10</td><td>350</td><td>122</td><td>3500</td><td>1220</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Зелений Сенча</td><td>10</td><td>260</td><td>91</td><td>2600</td><td>910</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Чорний Ассам</td><td>12</td><td>210</td><td>74</td><td>2520</td><td>888</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Карпатський збір</td><td>13</td><td>180</td><td>63</td><td>2340</td><td>819</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Ручна кавомолка</td><td>4</td><td>1250</td><td>438</td><td>5000</td><td>1752</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Турка мідна</td><td>5</td><td>690</td><td>241</td><td>3450</td><td>1205</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Френч-прес</td><td>5</td><td>780</td><td>273</td><td>3900</td><td>1365</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">03.11.2026</th><td>Кавова чашка</td><td>13</td><td>240</td><td>84</td><td>3120</td><td>1092</td></tr>
+            </tbody>
+            <tbody class="table-group-divider">
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Ефіопія Сідамо</td><td>13</td><td>420</td><td>147</td><td>5460</td><td>1911</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Бразилія Сантос</td><td>17</td><td>320</td><td>112</td><td>5440</td><td>1904</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Колумбія Супремо</td><td>12</td><td>380</td><td>133</td><td>4560</td><td>1596</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Еспресо-мікс</td><td>20</td><td>290</td><td>102</td><td>5800</td><td>2040</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Улун Те Гуань Інь</td><td>6</td><td>350</td><td>122</td><td>2100</td><td>732</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Зелений Сенча</td><td>12</td><td>260</td><td>91</td><td>3120</td><td>1092</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Чорний Ассам</td><td>17</td><td>210</td><td>74</td><td>3570</td><td>1258</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Карпатський збір</td><td>10</td><td>180</td><td>63</td><td>1800</td><td>630</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Ручна кавомолка</td><td>2</td><td>1250</td><td>438</td><td>2500</td><td>876</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Турка мідна</td><td>7</td><td>690</td><td>241</td><td>4830</td><td>1687</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Френч-прес</td><td>6</td><td>780</td><td>273</td><td>4680</td><td>1638</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">04.11.2026</th><td>Кавова чашка</td><td>12</td><td>240</td><td>84</td><td>2880</td><td>1008</td></tr>
+            </tbody>
+            <tbody class="table-group-divider">
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Ефіопія Сідамо</td><td>13</td><td>420</td><td>147</td><td>5460</td><td>1911</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Бразилія Сантос</td><td>22</td><td>320</td><td>112</td><td>7040</td><td>2464</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Колумбія Супремо</td><td>15</td><td>380</td><td>133</td><td>5700</td><td>1995</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Еспресо-мікс</td><td>22</td><td>290</td><td>102</td><td>6380</td><td>2244</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Улун Те Гуань Інь</td><td>11</td><td>350</td><td>122</td><td>3850</td><td>1342</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Зелений Сенча</td><td>15</td><td>260</td><td>91</td><td>3900</td><td>1365</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Чорний Ассам</td><td>19</td><td>210</td><td>74</td><td>3990</td><td>1406</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Карпатський збір</td><td>10</td><td>180</td><td>63</td><td>1800</td><td>630</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Ручна кавомолка</td><td>4</td><td>1250</td><td>438</td><td>5000</td><td>1752</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Турка мідна</td><td>6</td><td>690</td><td>241</td><td>4140</td><td>1446</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Френч-прес</td><td>6</td><td>780</td><td>273</td><td>4680</td><td>1638</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">05.11.2026</th><td>Кавова чашка</td><td>10</td><td>240</td><td>84</td><td>2400</td><td>840</td></tr>
+            </tbody>
+            <tbody class="table-group-divider">
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Ефіопія Сідамо</td><td>18</td><td>420</td><td>147</td><td>7560</td><td>2646</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Бразилія Сантос</td><td>19</td><td>320</td><td>112</td><td>6080</td><td>2128</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Колумбія Супремо</td><td>16</td><td>380</td><td>133</td><td>6080</td><td>2128</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Еспресо-мікс</td><td>22</td><td>290</td><td>102</td><td>6380</td><td>2244</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Улун Те Гуань Інь</td><td>13</td><td>350</td><td>122</td><td>4550</td><td>1586</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Зелений Сенча</td><td>17</td><td>260</td><td>91</td><td>4420</td><td>1547</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Чорний Ассам</td><td>17</td><td>210</td><td>74</td><td>3570</td><td>1258</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Карпатський збір</td><td>15</td><td>180</td><td>63</td><td>2700</td><td>945</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Ручна кавомолка</td><td>4</td><td>1250</td><td>438</td><td>5000</td><td>1752</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Турка мідна</td><td>4</td><td>690</td><td>241</td><td>2760</td><td>964</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Френч-прес</td><td>4</td><td>780</td><td>273</td><td>3120</td><td>1092</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">06.11.2026</th><td>Кавова чашка</td><td>9</td><td>240</td><td>84</td><td>2160</td><td>756</td></tr>
+            </tbody>
+            <tbody class="table-group-divider">
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Ефіопія Сідамо</td><td>18</td><td>420</td><td>147</td><td>7560</td><td>2646</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Бразилія Сантос</td><td>25</td><td>320</td><td>112</td><td>8000</td><td>2800</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Колумбія Супремо</td><td>16</td><td>380</td><td>133</td><td>6080</td><td>2128</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Еспресо-мікс</td><td>24</td><td>290</td><td>102</td><td>6960</td><td>2448</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Улун Те Гуань Інь</td><td>15</td><td>350</td><td>122</td><td>5250</td><td>1830</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Зелений Сенча</td><td>17</td><td>260</td><td>91</td><td>4420</td><td>1547</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Чорний Ассам</td><td>18</td><td>210</td><td>74</td><td>3780</td><td>1332</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Карпатський збір</td><td>18</td><td>180</td><td>63</td><td>3240</td><td>1134</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Ручна кавомолка</td><td>5</td><td>1250</td><td>438</td><td>6250</td><td>2190</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Турка мідна</td><td>5</td><td>690</td><td>241</td><td>3450</td><td>1205</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Френч-прес</td><td>6</td><td>780</td><td>273</td><td>4680</td><td>1638</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">07.11.2026</th><td>Кавова чашка</td><td>11</td><td>240</td><td>84</td><td>2640</td><td>924</td></tr>
+            </tbody>
+            <tbody class="table-group-divider">
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Ефіопія Сідамо</td><td>19</td><td>420</td><td>147</td><td>7980</td><td>2793</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Бразилія Сантос</td><td>18</td><td>320</td><td>112</td><td>5760</td><td>2016</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Колумбія Супремо</td><td>15</td><td>380</td><td>133</td><td>5700</td><td>1995</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Еспресо-мікс</td><td>21</td><td>290</td><td>102</td><td>6090</td><td>2142</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Улун Те Гуань Інь</td><td>9</td><td>350</td><td>122</td><td>3150</td><td>1098</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Зелений Сенча</td><td>13</td><td>260</td><td>91</td><td>3380</td><td>1183</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Чорний Ассам</td><td>19</td><td>210</td><td>74</td><td>3990</td><td>1406</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Карпатський збір</td><td>14</td><td>180</td><td>63</td><td>2520</td><td>882</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Ручна кавомолка</td><td>1</td><td>1250</td><td>438</td><td>1250</td><td>438</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Турка мідна</td><td>7</td><td>690</td><td>241</td><td>4830</td><td>1687</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Френч-прес</td><td>3</td><td>780</td><td>273</td><td>2340</td><td>819</td></tr>
+              <tr><th scope="row" class="bg-warning-subtle">08.11.2026</th><td>Кавова чашка</td><td>14</td><td>240</td><td>84</td><td>3360</td><td>1176</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Перемикач теми -->
+  <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3">
+    <button class="btn btn-primary py-2 d-flex align-items-center" id="theme-toggle" type="button"
+            data-bs-toggle="dropdown" aria-expanded="false" aria-label="Змінити тему">
+      <i class="bi bi-circle-half theme-icon-active"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end shadow">
+      <li>
+        <button type="button" class="dropdown-item d-flex align-items-center" data-theme-value="light">
+          <i class="bi bi-sun-fill me-2"></i> Light <i class="bi bi-check2 ms-auto d-none"></i>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="dropdown-item d-flex align-items-center" data-theme-value="dark">
+          <i class="bi bi-moon-stars-fill me-2"></i> Dark <i class="bi bi-check2 ms-auto d-none"></i>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="dropdown-item d-flex align-items-center" data-theme-value="auto">
+          <i class="bi bi-circle-half me-2"></i> Auto <i class="bi bi-check2 ms-auto d-none"></i>
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var media = window.matchMedia('(prefers-color-scheme: dark)');
+      var buttons = document.querySelectorAll('[data-theme-value]');
+      var mainIcon = document.querySelector('.theme-icon-active');
+
+      function getSaved() {
+        try { return localStorage.getItem('theme') || 'auto'; } catch (e) { return 'auto'; }
+      }
+      function apply(theme) {
+        var real = theme === 'auto' ? (media.matches ? 'dark' : 'light') : theme;
+        root.setAttribute('data-bs-theme', real);
+        buttons.forEach(function (b) {
+          var active = b.getAttribute('data-theme-value') === theme;
+          b.classList.toggle('active', active);
+          b.querySelector('.bi-check2').classList.toggle('d-none', !active);
+          if (active) {
+            mainIcon.className = b.querySelector('.bi').className
+              .replace('me-2', '').trim() + ' theme-icon-active';
+          }
+        });
+      }
+      buttons.forEach(function (b) {
+        b.addEventListener('click', function () {
+          var theme = b.getAttribute('data-theme-value');
+          try { localStorage.setItem('theme', theme); } catch (e) {}
+          apply(theme);
+        });
+      });
+      media.addEventListener('change', function () {
+        if (getSaved() === 'auto') apply('auto');
+      });
+      apply(getSaved());
+    })();
+  </script>
+  <!-- Google Charts -->
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <script>
+    google.charts.load('current', { packages: ['corechart'] });
+    google.charts.setOnLoadCallback(initCharts);
+
+    // Один колір на один товар (однаковий в усіх діаграмах), порядок = порядок товарів у таблиці
+    var PALETTE = ['#3366CC', '#DC3912', '#FF9900', '#109618', '#990099', '#0099C6',
+                   '#DD4477', '#66AA00', '#B82E2E', '#316395', '#994499', '#22AA99'];
+
+    var dates = [], products = [], sales = {}, revenue = {}, profit = {};
+
+    // Дані беремо з таблиці на сторінці
+    function readTable() {
+      document.querySelectorAll('main table tbody tr').forEach(function (tr) {
+        var d = tr.children[0].textContent.trim();
+        var p = tr.children[1].textContent.trim();
+        var n = Number(tr.children[2].textContent);
+        if (dates.indexOf(d) === -1) dates.push(d);
+        if (products.indexOf(p) === -1) products.push(p);
+        if (!sales[d]) { sales[d] = {}; revenue[d] = {}; profit[d] = {}; }
+        sales[d][p] = n;
+        revenue[d][p] = Number(tr.children[5].textContent);
+        profit[d][p] = Number(tr.children[6].textContent);
+      });
+    }
+
+    function themeColors() {
+      var dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+      return {
+        text: dark ? '#dee2e6' : '#212529',
+        grid: dark ? '#495057' : '#dee2e6',
+        bg: dark ? '#2b3035' : '#f8f9fa'
+      };
+    }
+
+    function buildLegend() {
+      var box = document.getElementById('products-legend');
+      box.innerHTML = '';
+      products.forEach(function (p, i) {
+        var item = document.createElement('span');
+        item.className = 'd-inline-flex align-items-center gap-1';
+        item.innerHTML = '<span style="display:inline-block;width:12px;height:12px;background:' +
+                         PALETTE[i] + '"></span>' + p;
+        box.appendChild(item);
+      });
+    }
+
+    function drawPies() {
+      var t = themeColors();
+      dates.forEach(function (d, i) {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Товар');
+        data.addColumn('number', 'Продано, штук');
+        products.forEach(function (p) { data.addRow([p, sales[d][p]]); });
+        new google.visualization.PieChart(document.getElementById('pie' + (i + 1))).draw(data, {
+          title: d,
+          titleTextStyle: { color: t.text, fontSize: 13 },
+          colors: PALETTE,
+          legend: 'none',
+          pieSliceText: 'none',
+          pieSliceBorderColor: t.bg,
+          backgroundColor: 'transparent',
+          fontName: 'system-ui',
+          chartArea: { left: 5, top: 35, width: '90%', height: '80%' }
+        });
+      });
+    }
+
+    function barData() {
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', 'Дата');
+      products.forEach(function (p) { data.addColumn('number', p); });
+      dates.forEach(function (d) {
+        var row = [d];
+        products.forEach(function (p) { row.push(sales[d][p]); });
+        data.addRow(row);
+      });
+      return data;
+    }
+
+    function barOptions(title, stacked, vTitle, vFormat) {
+      var t = themeColors();
+      var txt = { color: t.text };
+      return {
+        title: title,
+        titleTextStyle: { color: t.text, fontSize: 15 },
+        isStacked: stacked,
+        colors: PALETTE,
+        backgroundColor: 'transparent',
+          fontName: 'system-ui',
+        legend: { position: window.innerWidth < 768 ? 'bottom' : 'right', maxLines: 6, textStyle: { color: t.text, fontSize: 12 } },
+        hAxis: { title: 'Дата', textStyle: txt, titleTextStyle: txt, slantedText: true, slantedTextAngle: 45 },
+        vAxis: { title: vTitle, format: vFormat, textStyle: txt, titleTextStyle: txt,
+                 gridlines: { color: t.grid }, minorGridlines: { color: 'transparent' } },
+        chartArea: { left: 60, top: 45, width: window.innerWidth < 768 ? '80%' : '60%', height: '62%' }
+      };
+    }
+
+    function drawBars() {
+      var data = barData();
+      new google.visualization.ColumnChart(document.getElementById('bar-abs')).draw(
+        data, barOptions('Продажі за днями (штук, з накопиченням)', true, 'Продано, штук', '#'));
+      new google.visualization.ColumnChart(document.getElementById('bar-pct')).draw(
+        data, barOptions('Частка товарів за днями (%, з накопиченням)', 'percent', 'Частка, %', '#%'));
+    }
+
+    var lineGroup = 'all';
+
+    function drawLine() {
+      var t = themeColors();
+      var txt = { color: t.text, fontSize: 12 };
+      var mobile = window.innerWidth < 768;
+      var shapes = ['circle', 'triangle', 'square', 'diamond', 'star', 'polygon'];
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', 'Дата');
+
+      // які товари показувати: усі або одна категорія (по 4 товари)
+      var idx = [];
+      products.forEach(function (p, i) {
+        if (lineGroup === 'all' || Math.floor(i / 4) === Number(lineGroup)) idx.push(i);
+      });
+
+      var series = {}, colors = [];
+      idx.forEach(function (i, k) {
+        var p = products[i];
+        data.addColumn('number', p + ' - виручка, грн');
+        data.addColumn('number', p + ' - прибуток, грн');
+        colors.push(PALETTE[i], PALETTE[i]);                       // однаковий колір пари ліній
+        series[2 * k] = { lineDashStyle: [5, 3], pointSize: 0, lineWidth: 2 };   // виручка: пунктир
+        series[2 * k + 1] = { pointSize: 7, pointShape: shapes[i % shapes.length], lineWidth: 2 }; // прибуток: точки
+      });
+      dates.forEach(function (d) {
+        var row = [d];
+        idx.forEach(function (i) { row.push(revenue[d][products[i]], profit[d][products[i]]); });
+        data.addRow(row);
+      });
+
+      var box = document.getElementById('line-chart');
+      box.style.height = (lineGroup === 'all' ? (mobile ? 900 : 640) : (mobile ? 620 : 460)) + 'px';
+
+      new google.visualization.LineChart(box).draw(data, {
+        title: 'Товар - виручка, грн (пунктир) та товар - прибуток, грн (точки)',
+        titleTextStyle: { color: t.text, fontSize: 14 },
+        colors: colors,
+        series: series,
+        backgroundColor: 'transparent',
+        fontName: 'system-ui',
+        legend: { position: mobile ? 'bottom' : 'right', maxLines: 12, textStyle: { color: t.text, fontSize: 11 } },
+        hAxis: { title: 'Дата', textStyle: txt, titleTextStyle: { color: t.text, italic: false } },
+        vAxis: { title: 'Гривні, грн', textStyle: txt, titleTextStyle: { color: t.text, italic: false },
+                 gridlines: { color: t.grid }, minorGridlines: { color: 'transparent' } },
+        chartArea: { left: 70, top: 45, width: mobile ? '80%' : '66%', height: lineGroup === 'all' && mobile ? '45%' : '70%' }
+      });
+    }
+
+    function fmt(n) { return n.toLocaleString('uk-UA'); }
+
+    function fillKpis() {
+      var u = 0, r = 0, pf = 0, byProduct = {};
+      dates.forEach(function (d) {
+        products.forEach(function (p) {
+          u += sales[d][p]; r += revenue[d][p]; pf += profit[d][p];
+          byProduct[p] = (byProduct[p] || 0) + profit[d][p];
+        });
+      });
+      var best = products.reduce(function (a, b) { return byProduct[b] > byProduct[a] ? b : a; });
+      document.getElementById('kpi-units').textContent = fmt(u);
+      document.getElementById('kpi-revenue').textContent = fmt(r);
+      document.getElementById('kpi-profit').textContent = fmt(pf);
+      document.getElementById('kpi-best').textContent = best;
+    }
+
+    function setupFilter() {
+      var buttons = document.querySelectorAll('#line-filter [data-group]');
+      buttons.forEach(function (b) {
+        b.addEventListener('click', function () {
+          buttons.forEach(function (x) { x.classList.remove('active'); });
+          b.classList.add('active');
+          lineGroup = b.getAttribute('data-group');
+          drawLine();
+        });
+      });
+    }
+
+    function drawAll() { drawLine(); drawPies(); drawBars(); }
+
+    function initCharts() {
+      readTable();
+      buildLegend();
+      fillKpis();
+      setupFilter();
+      drawAll();
+
+      var timer;
+      window.addEventListener('resize', function () {
+        clearTimeout(timer);
+        timer = setTimeout(drawAll, 200);
+      });
+      // перемальовуємо діаграми при зміні теми
+      new MutationObserver(drawAll).observe(document.documentElement,
+        { attributes: true, attributeFilter: ['data-bs-theme'] });
+    }
+  </script>
+</body>
+</html>
